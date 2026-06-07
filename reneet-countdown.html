@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE-NEET UG 2026 Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --glass-bg: rgba(255,255,255,0.13);
+    --glass-border: rgba(255,255,255,0.28);
+    --glass-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 2px 12px rgba(0,0,0,0.10);
+    --accent: #1a2f5e;
+    --accent2: #c47b2b;
+    --text-primary: #f8f6f0;
+    --text-secondary: rgba(248,246,240,0.72);
+    --block-bg: rgba(255,255,255,0.09);
+    --glow: 0 0 32px rgba(196,123,43,0.18);
+    --grad-transition: background 2s cubic-bezier(0.4,0,0.2,1);
+    --progress-fill: #1a2f5e;
+    --progress-track: rgba(255,255,255,0.2);
+    --radius-card: 28px;
+    --radius-block: 18px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    transition: var(--grad-transition);
+    position: relative;
+  }
+
+  /* ─── TIME-OF-DAY GRADIENTS ─── */
+  body.morning {
+    background: linear-gradient(135deg, #f9f2e4 0%, #fceabb 30%, #f8d37f 60%, #ffe4a0 100%);
+    --text-primary: #2a1a0a;
+    --text-secondary: rgba(42,26,10,0.65);
+    --glass-bg: rgba(255,255,255,0.38);
+    --glass-border: rgba(255,220,120,0.38);
+    --progress-fill: #7a4a00;
+    --block-bg: rgba(255,255,255,0.22);
+  }
+  body.afternoon {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8f4fd 35%, #c3dff5 65%, #f0f8ff 100%);
+    --text-primary: #0d2137;
+    --text-secondary: rgba(13,33,55,0.62);
+    --glass-bg: rgba(255,255,255,0.42);
+    --glass-border: rgba(180,220,255,0.38);
+    --progress-fill: #1a5f9e;
+    --block-bg: rgba(200,235,255,0.22);
+  }
+  body.evening {
+    background: linear-gradient(135deg, #1a0a2e 0%, #3d1a00 30%, #c0521a 62%, #1a2f5e 100%);
+    --text-primary: #fdf0e0;
+    --text-secondary: rgba(253,240,224,0.68);
+    --glass-bg: rgba(255,200,120,0.10);
+    --glass-border: rgba(255,180,80,0.22);
+    --progress-fill: #f5a623;
+    --block-bg: rgba(255,180,80,0.08);
+  }
+  body.night {
+    background: linear-gradient(145deg, #020b18 0%, #071428 40%, #0d1f3c 70%, #07111e 100%);
+    --text-primary: #e8f0fc;
+    --text-secondary: rgba(232,240,252,0.60);
+    --glass-bg: rgba(20,60,120,0.18);
+    --glass-border: rgba(100,160,255,0.18);
+    --progress-fill: #4a90e2;
+    --block-bg: rgba(30,80,180,0.12);
+  }
+
+  /* ─── CANVAS PARTICLES ─── */
+  #particle-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── MAIN WRAPPER ─── */
+  .wrapper {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 900px;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ─── GLASSMORPHISM CARD ─── */
+  .card {
+    width: 100%;
+    background: var(--glass-bg);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(22px) saturate(1.5);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    border-radius: var(--radius-card);
+    padding: 44px 40px 36px;
+    transition: box-shadow 0.4s ease, transform 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-card);
+    background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .card:hover {
+    box-shadow: var(--glass-shadow), var(--glow);
+    transform: translateY(-3px) scale(1.005);
+  }
+
+  /* ─── HEADER ─── */
+  .card-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .exam-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 100px;
+    padding: 5px 18px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.55rem, 4.5vw, 2.35rem);
+    font-weight: 900;
+    color: var(--text-primary);
+    line-height: 1.18;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .card-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    font-weight: 400;
+    letter-spacing: 0.3px;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    width: 64px;
+    height: 2.5px;
+    background: linear-gradient(90deg, transparent, var(--accent2, #c47b2b), transparent);
+    border-radius: 4px;
+    margin: 0 auto 32px;
+    opacity: 0.7;
+  }
+
+  /* ─── COUNTDOWN BLOCKS ─── */
+  .countdown-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: nowrap;
+    margin-bottom: 32px;
+  }
+
+  .time-block {
+    flex: 1;
+    min-width: 0;
+    background: var(--block-bg);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: var(--radius-block);
+    padding: 20px 10px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    transition: box-shadow 0.35s ease, transform 0.3s ease;
+    cursor: default;
+    overflow: hidden;
+  }
+  .time-block::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-block);
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .time-block:hover {
+    box-shadow: 0 8px 32px rgba(196,123,43,0.14), 0 0 0 1.5px rgba(255,255,255,0.22);
+    transform: translateY(-2px);
+  }
+
+  /* ─── ODOMETER DIGIT DISPLAY ─── */
+  .digit-display {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    color: var(--text-primary);
+    line-height: 1;
+    letter-spacing: 2px;
+    display: flex;
+    gap: 2px;
+    perspective: 300px;
+    position: relative;
+  }
+
+  .digit-slot {
+    position: relative;
+    width: 1ch;
+    height: 1.1em;
+    overflow: hidden;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .digit-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.42s cubic-bezier(0.32, 0.84, 0.44, 1);
+    will-change: transform;
+  }
+
+  /* Each cell is one digit 0–9 + wrapping */
+  .digit-cell {
+    height: 1.1em;
+    line-height: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1ch;
+  }
+
+  .time-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 2.8px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-section {
+    margin-top: 4px;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 9px;
+  }
+  .progress-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .progress-pct {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+  }
+  .progress-track {
+    width: 100%;
+    height: 7px;
+    background: var(--progress-track);
+    border-radius: 100px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--progress-fill);
+    border-radius: 100px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background 2s ease;
+    position: relative;
+    min-width: 4px;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--progress-fill);
+    box-shadow: 0 0 10px 3px rgba(255,255,255,0.28);
+  }
+
+  /* ─── DATE FOOTER ─── */
+  .date-footer {
+    text-align: center;
+    margin-top: 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+  .date-footer strong {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* ─── EXAM DAY OVERLAY ─── */
+  #exam-day-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px;
+    background: radial-gradient(ellipse at center, #0d1f3c 0%, #020b18 100%);
+    animation: overlayFadeIn 1.2s ease forwards;
+  }
+  #exam-day-overlay.active { display: flex; }
+
+  @keyframes overlayFadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .exam-day-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 7vw, 5rem);
+    font-weight: 900;
+    color: #e8f0fc;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    animation: titlePulse 2.5s ease-in-out infinite;
+  }
+  @keyframes titlePulse {
+    0%,100% { text-shadow: 0 0 30px rgba(74,144,226,0.4); }
+    50% { text-shadow: 0 0 60px rgba(74,144,226,0.9), 0 0 120px rgba(74,144,226,0.3); }
+  }
+  .exam-day-sub {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(232,240,252,0.65);
+    font-weight: 500;
+  }
+  .exam-day-stars {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* ─── PULSE RING on CARD ─── */
+  @keyframes pulseRing {
+    0% { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.06); }
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 560px) {
+    .card { padding: 30px 18px 26px; }
+    .countdown-row { gap: 10px; }
+    .time-block { padding: 16px 6px 12px; border-radius: 14px; }
+    .time-label { font-size: 9px; letter-spacing: 2px; }
+    .card-title { font-size: 1.4rem; }
+  }
+
+  @media (max-width: 380px) {
+    .countdown-row { gap: 7px; }
+    .digit-display { font-size: 2rem; }
+  }
+
+  /* ─── LOADING STATE ─── */
+  .shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ─── DECORATIVE ─── */
+  .corner-deco {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    opacity: 0.13;
+    pointer-events: none;
+  }
+  .corner-deco.tl { top: 0; left: 0; border-top: 2px solid var(--text-primary); border-left: 2px solid var(--text-primary); border-radius: 28px 0 0 0; }
+  .corner-deco.br { bottom: 0; right: 0; border-bottom: 2px solid var(--text-primary); border-right: 2px solid var(--text-primary); border-radius: 0 0 28px 0; }
+
+  .star-deco {
+    position: absolute;
+    font-size: 18px;
+    opacity: 0.25;
+    animation: starFloat 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .star-deco:nth-child(1) { top: 14px; right: 28px; animation-delay: 0s; }
+  .star-deco:nth-child(2) { bottom: 20px; left: 32px; animation-delay: 3s; }
+  @keyframes starFloat {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(15deg); }
+  }
+</style>
+</head>
+<body class="night">
+
+<canvas id="particle-canvas"></canvas>
+
+<!-- ─── EXAM DAY OVERLAY ─── -->
+<div id="exam-day-overlay">
+  <div class="exam-day-stars" id="star-field"></div>
+  <div class="exam-day-title">Exam Day<br>Has Arrived</div>
+  <div class="exam-day-sub">RE-NEET UG 2026 · 21 June 2026</div>
+</div>
+
+<!-- ─── MAIN CARD ─── -->
+<div class="wrapper">
+  <div class="card" id="main-card">
+    <div class="corner-deco tl"></div>
+    <div class="corner-deco br"></div>
+    <span class="star-deco">✦</span>
+    <span class="star-deco">◆</span>
+
+    <div class="card-header">
+      <div class="exam-badge">Official · India · NMC</div>
+      <h1 class="card-title">RE-NEET UG 2026<br>Countdown</h1>
+      <p class="card-subtitle">21 June 2026 · Every second counts</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="countdown-row" id="countdown-row">
+      <div class="time-block" id="block-days">
+        <div class="digit-display" id="dd-days"></div>
+        <div class="time-label">Days</div>
+      </div>
+      <div class="time-block" id="block-hours">
+        <div class="digit-display" id="dd-hours"></div>
+        <div class="time-label">Hours</div>
+      </div>
+      <div class="time-block" id="block-minutes">
+        <div class="digit-display" id="dd-minutes"></div>
+        <div class="time-label">Minutes</div>
+      </div>
+      <div class="time-block" id="block-seconds">
+        <div class="digit-display" id="dd-seconds"></div>
+        <div class="time-label">Seconds</div>
+      </div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-section">
+      <div class="progress-meta">
+        <span class="progress-label">Time Elapsed</span>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="date-footer">
+      <strong>07 Jun 2026</strong> → Exam Date: <strong>21 Jun 2026</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   RE-NEET UG 2026 PREMIUM COUNTDOWN TIMER
+   ══════════════════════════════════════════ */
+
+// ─── CONFIGURATION ───────────────────────
+const TARGET_DATE  = new Date('2026-06-21T00:00:00');
+const START_DATE   = new Date('2026-06-07T00:00:00');
+const TOTAL_MS     = TARGET_DATE - START_DATE;
+
+// ─── TIME-OF-DAY BACKGROUND ───────────────
+function applyTimeOfDay() {
+  const h = new Date().getHours();
+  const body = document.body;
+  let cls = 'night';
+  if (h >= 5  && h < 11) cls = 'morning';
+  else if (h >= 11 && h < 17) cls = 'afternoon';
+  else if (h >= 17 && h < 20) cls = 'evening';
+
+  if (!body.classList.contains(cls)) {
+    body.className = cls;
+  }
+}
+applyTimeOfDay();
+setInterval(applyTimeOfDay, 60000);
+
+// ─── ODOMETER DIGIT SYSTEM ────────────────
+const DIGITS = ['0','1','2','3','4','5','6','7','8','9'];
+
+function buildSlot() {
+  const slot = document.createElement('span');
+  slot.className = 'digit-slot';
+  const inner = document.createElement('span');
+  inner.className = 'digit-inner';
+
+  // Build 0-9 cells + repeat 0-2 for smooth wrap
+  const cells = [...DIGITS, '0', '1', '2'];
+  cells.forEach(d => {
+    const cell = document.createElement('span');
+    cell.className = 'digit-cell';
+    cell.textContent = d;
+    inner.appendChild(cell);
+  });
+
+  slot.appendChild(inner);
+  slot.dataset.current = '0';
+  return { slot, inner };
+}
+
+// Map of display containers -> their slots array
+const displaySlots = {};
+
+function initDisplay(containerId, numDigits) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const slots = [];
+  for (let i = 0; i < numDigits; i++) {
+    const { slot, inner } = buildSlot();
+    container.appendChild(slot);
+    slots.push({ slot, inner, current: -1 });
+  }
+  displaySlots[containerId] = slots;
+}
+
+function setDigit(slotObj, digit) {
+  const d = parseInt(digit, 10);
+  if (slotObj.current === d) return;
+  slotObj.current = d;
+  // Translate: each cell is 1.1em tall
+  // digit d → offset = -d * 1.1em
+  slotObj.inner.style.transform = `translateY(${-d * 1.1}em)`;
+}
+
+function updateDisplay(containerId, value, pad) {
+  const str = String(value).padStart(pad, '0');
+  const slots = displaySlots[containerId];
+  if (!slots) return;
+  for (let i = 0; i < slots.length; i++) {
+    setDigit(slots[i], str[i] || '0');
+  }
+}
+
+// Init all 4 displays
+initDisplay('dd-days',    3); // max 999
+initDisplay('dd-hours',   2);
+initDisplay('dd-minutes', 2);
+initDisplay('dd-seconds', 2);
+
+// ─── PROGRESS BAR ─────────────────────────
+function updateProgress() {
+  const now = Date.now();
+  const elapsed = now - START_DATE.getTime();
+  const pct = Math.min(100, Math.max(0, (elapsed / TOTAL_MS) * 100));
+  document.getElementById('progress-fill').style.width = pct.toFixed(3) + '%';
+  document.getElementById('progress-pct').textContent = pct.toFixed(1) + '%';
+}
+
+// ─── MAIN TICK ────────────────────────────
+function tick() {
+  const now = Date.now();
+  const diff = TARGET_DATE.getTime() - now;
+
+  if (diff <= 0) {
+    updateDisplay('dd-days', 0, 3);
+    updateDisplay('dd-hours', 0, 2);
+    updateDisplay('dd-minutes', 0, 2);
+    updateDisplay('dd-seconds', 0, 2);
+    updateProgress();
+    showExamDay();
+    return;
+  }
+
+  const totalSecs = Math.floor(diff / 1000);
+  const days    = Math.floor(totalSecs / 86400);
+  const hours   = Math.floor((totalSecs % 86400) / 3600);
+  const minutes = Math.floor((totalSecs % 3600) / 60);
+  const seconds = totalSecs % 60;
+
+  updateDisplay('dd-days',    days,    3);
+  updateDisplay('dd-hours',   hours,   2);
+  updateDisplay('dd-minutes', minutes, 2);
+  updateDisplay('dd-seconds', seconds, 2);
+  updateProgress();
+
+  // Pulse seconds block
+  if (seconds === 0) pulseBlock('block-minutes');
+  pulseBlock('block-seconds');
+}
+
+function pulseBlock(id) {
+  const el = document.getElementById(id);
+  el.style.transition = 'box-shadow 0.1s ease';
+  el.style.boxShadow = '0 0 18px rgba(196,123,43,0.38)';
+  setTimeout(() => {
+    el.style.boxShadow = '';
+  }, 300);
+}
+
+// ─── EXAM DAY OVERLAY ─────────────────────
+function showExamDay() {
+  clearInterval(timerInterval);
+  const overlay = document.getElementById('exam-day-overlay');
+  overlay.classList.add('active');
+  spawnStarField();
+}
+
+function spawnStarField() {
+  const sf = document.getElementById('star-field');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.style.cssText = `
+      position:absolute;
+      width:${Math.random()*3+1}px;
+      height:${Math.random()*3+1}px;
+      border-radius:50%;
+      background:rgba(255,255,255,${Math.random()*0.7+0.2});
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      animation:starTwinkle ${2+Math.random()*3}s ease-in-out infinite;
+      animation-delay:${Math.random()*3}s;
+    `;
+    sf.appendChild(s);
+  }
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes starTwinkle {
+      0%,100%{opacity:0.2;transform:scale(1);}
+      50%{opacity:1;transform:scale(1.6);}
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// ─── PARTICLE CANVAS SYSTEM ───────────────
+(function initParticles() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COUNT = Math.min(70, Math.floor(window.innerWidth / 14));
+
+  class Particle {
+    constructor() { this.reset(true); }
+    reset(initial) {
+      this.x  = Math.random() * W;
+      this.y  = initial ? Math.random() * H : H + 10;
+      this.r  = Math.random() * 2.2 + 0.6;
+      this.vx = (Math.random() - 0.5) * 0.28;
+      this.vy = -(Math.random() * 0.4 + 0.12);
+      this.opacity = Math.random() * 0.28 + 0.04;
+      this.life = 0;
+      this.maxLife = 300 + Math.random() * 400;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.life++;
+      if (this.y < -10 || this.life > this.maxLife) this.reset(false);
+    }
+    draw() {
+      const fade = Math.min(1, this.life / 60) * Math.min(1, (this.maxLife - this.life) / 60);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${this.opacity * fade})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+
+  let raf;
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => { p.update(); p.draw(); });
+    raf = requestAnimationFrame(loop);
+  }
+  loop();
+
+  // Pause when hidden
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) cancelAnimationFrame(raf);
+    else loop();
+  });
+})();
+
+// ─── START ────────────────────────────────
+tick();
+const timerInterval = setInterval(tick, 1000);
+</script>
+</body>
+</html>
